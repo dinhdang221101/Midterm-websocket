@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 700px;
+    }
+
+    .chat-header {
+      background-color: #0a66c2;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .message {
+      word-wrap: break-word;
+      margin-bottom: 15px;
+      display: block;
+      width: fit-content;
+    }
+
+    .message.sent {
+      text-align: right;
+      color: #fff;
+      background-color: #0a66c2;
+      padding: 10px;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .message.received {
+      text-align: left;
+      background-color: #e1e1e1;
+      padding: 10px;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .input-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      margin: 5px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .input-area button {
+      margin: 5px;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      background-color: #0a66c2;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .back-button {
+      color: white;
+      text-decoration: none;
+    }
+
+    .typing-indicator {
+  display: flex;
+  justify-content: flex-start;;
+  align-items: center;
+  height: 24px; /* Có thể điều chỉnh chiều cao tùy ý */
+}
+
+.typing-indicator span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #000; /* Màu sắc của các dấu chấm */
+  margin: 0 4px; /* Khoảng cách giữa các dấu chấm */
+  animation: dotBlink 1s infinite; /* Hiệu ứng nhấp nháy */
+}
+
+@keyframes dotBlink {
+  0%, 50%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px); /* Điều chỉnh độ nhảy của dấu chấm */
+  }
+  75% {
+    transform: translateY(5px); /* Điều chỉnh độ nhảy của dấu chấm */
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      Chat với <%= otherUser %>
+    </div>
+    <input type="hidden" id="loggedInUser" value="<%= loggedInUser %>">
+    <input type="hidden" id="receiver" value="<%= otherUser %>">
+    <div class="chat-box">
+      <% messages.forEach(message=> { %>
+        <% if (message.sender===loggedInUser) { %>
+          <div style="width: 100%;display: flex;
+          justify-content: end;">
+            <div class="message sent">
+              <%= message.content %>
+            </div>
+          </div>
+          <% } else { %>
+            <div style="width: 100%;">
+              <div class="message received">
+                <%= message.content %>
+              </div>
+            </div>
+            <% } %>
+              <% }); %>
+    </div>
+    <div class="input-area">
+      <form id="messageForm" style="display: flex; width: 100%;">
+        <input type="text" placeholder="Nhập tin nhắn...">
+        <button type="submit">Gửi</button>
+        <button><a href="/" class="back-button">Quay lại</a></button>
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form');
+    const input = document.querySelector('input[type="text"]');
+    const chatBox = document.querySelector('.chat-box');
+    function scrollToBottom() {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    const socket = io();
+    input.addEventListener('focus', () => {
+      const messageText = input.value.trim();
+      const loggedInUser = document.getElementById('loggedInUser').value;
+      const receiver = document.getElementById('receiver').value;
+      if (messageText !== '') {
+        socket.emit('focus', { sender: loggedInUser, receiver: receiver, focus: true });
+      } else {
+        socket.emit('focus', { sender: loggedInUser, receiver: receiver, focus: false });
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      console.log("blur");
+      const loggedInUser = document.getElementById('loggedInUser').value;
+      const receiver = document.getElementById('receiver').value;
+      socket.emit('focus', { sender: loggedInUser, receiver: receiver, focus: false });
+    });
+    input.addEventListener('input', () => {
+      const messageText = input.value.trim();
+      if (messageText !== '') {
+        const loggedInUser = document.getElementById('loggedInUser').value;
+        const receiver = document.getElementById('receiver').value;
+        socket.emit('focus', { sender: loggedInUser, receiver: receiver, focus: true });
+      }else{
+        socket.emit('focus', { sender: loggedInUser, receiver: receiver, focus: false });
+      }
+    });
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const messageText = input.value.trim();
+
+      if (messageText !== '') {
+        const loggedInUser = document.getElementById('loggedInUser').value;
+        const receiver = document.getElementById('receiver').value;
+        socket.emit('message', { sender: loggedInUser, receiver: receiver, content: messageText });
+
+        const message = `<div style="width: 100%;display: flex; justify-content: end;">
+                        <div class="message sent">${messageText}</div>
+                      </div>`;
+        chatBox.innerHTML += message;
+        input.value = '';
+        scrollToBottom();
+      }
+    });
+
+    socket.on('message', (data) => {
+      const loggedInUser = document.getElementById('loggedInUser').value;
+      if (data.receiver == loggedInUser) {
+        const receivedMessage = `<div style="width: 100%;">
+                                  <div class="message received">${data.content}</div>
+                                </div>`;
+        chatBox.innerHTML += receivedMessage;
+        scrollToBottom();
+      }
+    });
+
+    socket.on('focus', (data) => {
+      const loggedInUser = document.getElementById('loggedInUser').value;
+      if (data.receiver == loggedInUser && data.focus) {
+        const typingIndicator = document.querySelector('.typing-indicator');
+        if (!typingIndicator) {
+          const typingIndicator = `<div class="typing-indicator">
+                               <span></span>
+                               <span></span>
+                               <span></span>
+                             </div>`;
+    chatBox.innerHTML += typingIndicator;
+        }
+        scrollToBottom();
+      } else {
+        const typingIndicator = document.querySelector('.typing-indicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+        scrollToBottom();
+      }
+    });
+    scrollToBottom();
+  });
+
+
+</script>

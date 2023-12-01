@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng nhập</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      width: 300px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-container h2 {
+      text-align: center;
+    }
+
+    .login-container form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-container form input[type="text"],
+    .login-container form input[type="password"],
+    .login-container form button {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+    }
+
+    .login-container form button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <h2>Đăng nhập</h2>
+    <% if (typeof error !=='undefined' ) { %>
+      <p style="color: red;">
+        <%= error %>
+      </p>
+      <% } %>
+        <form action="/auth/login" method="POST">
+          <input type="text" id="username" name="username" placeholder="Tên người dùng" required>
+          <input type="password" id="password" name="password" placeholder="Mật khẩu" required>
+          <button type="submit">Đăng nhập</button>
+        </form>
+  </div>
+</body>
+
+</html>
